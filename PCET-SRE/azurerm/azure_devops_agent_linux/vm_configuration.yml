@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  environment:
+    http_proxy: http://proxy.example.com:80
+    https_proxy: http://proxy.example.com:80
+  roles:
+     - azure_devops_agent
+  vars:
+    - az_devops_accesstoken: REPLACE_WITH_AZURE_DEVOPS_PAT
