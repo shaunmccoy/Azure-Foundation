@@ -1,0 +1,78 @@
+# Plan, wait for approval, then apply exactly that plan.
+#
+# Variable group "terraform-<environment>" must define: agent_pool, tenant_id,
+# tf_state_subscription_id, tf_state_resource_group, tf_state_storage_account, and whichever
+# secrets the config needs (express_route_authorization_key, vpn_shared_key, agent_pat_token, ...).
+# The "Apply" stage waits for approval on the Azure DevOps environment "foundation-<environment>".
+trigger: none
+
+parameters:
+  - name: environment
+    displayName: Environment
+    type: string
+    values: [LAB, DEV, UAT, PROD]
+  - name: config
+    displayName: Config (directory under configs/)
+    type: string
+    values:
+      - hub-base
+      - hub-appgateway
+      - hub-adds
+      - hub-infoblox
+      - hub-checkpoint
+      - hub-devopsagent
+      - spoke
+      - apim
+      - global-ingress
+      - test-vm
+  - name: var_file
+    displayName: Variable file under environments/ (e.g. CUS-PROD.tfvars or API/CUS-PROD.tfvars)
+    type: string
+  - name: tf_version
+    displayName: Terraform version
+    type: string
+    default: 1.17.2
+  - name: tf_sha256
+    displayName: SHA-256 of terraform_<version>_linux_amd64.zip
+    type: string
+    default: e6f16b2f0b137ee5729caa8c4e79a3bae4ee261acd198a1fcfa8584a6296605b
+
+variables:
+  - group: terraform-${{ parameters.environment }}
+
+stages:
+  - stage: Plan
+    jobs:
+      - job: plan
+        displayName: Terraform plan
+        pool:
+          name: $(agent_pool)
+        steps:
+          - template: templates/terraform.yaml
+            parameters:
+              config: ${{ parameters.config }}
+              var_file: ${{ parameters.var_file }}
+              command: plan
+              tf_version: ${{ parameters.tf_version }}
+              tf_sha256: ${{ parameters.tf_sha256 }}
+
+  - stage: Apply
+    dependsOn: Plan
+    jobs:
+      - deployment: apply
+        displayName: Terraform apply
+        timeoutInMinutes: 300
+        pool:
+          name: $(agent_pool)
+        environment: foundation-${{ parameters.environment }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/terraform.yaml
+                  parameters:
+                    config: ${{ parameters.config }}
+                    var_file: ${{ parameters.var_file }}
+                    command: apply
+                    tf_version: ${{ parameters.tf_version }}
+                    tf_sha256: ${{ parameters.tf_sha256 }}

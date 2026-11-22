@@ -1,0 +1,23 @@
+#!/bin/bash
+# First-boot setup for the Linux test VM. Runs as root via cloud-init.
+# Output: /var/log/cloud-init-output.log
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+%{ if http_proxy != "" || https_proxy != "" ~}
+cat <<'PROXY' | tee -a /etc/environment >/etc/profile.d/proxy.sh
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+no_proxy=169.254.169.254,168.63.129.16
+PROXY
+sed -i 's/^/export /' /etc/profile.d/proxy.sh
+. /etc/profile.d/proxy.sh
+%{ endif ~}
+
+apt-get update
+apt-get upgrade -y
+apt-get install -y net-tools curl traceroute iperf3 dnsutils

@@ -1,0 +1,98 @@
+# Shared Terraform steps. The agent authenticates with its managed identity; state is read and
+# written with Entra ID (no storage access keys), and nothing secret is echoed to the log.
+parameters:
+  - name: config
+    type: string
+  - name: var_file
+    type: string
+  - name: command
+    type: string
+    values: [plan, apply, destroy-plan]
+  - name: tf_version
+    type: string
+  - name: tf_sha256
+    type: string
+
+steps:
+  - checkout: self
+    persistCredentials: false
+
+  - bash: |
+      set -euo pipefail
+      zip="terraform_${TF_VERSION}_linux_amd64.zip"
+      curl -fsSLo "$(Agent.TempDirectory)/$zip" "https://releases.hashicorp.com/terraform/${TF_VERSION}/$zip"
+      echo "${TF_SHA256}  $(Agent.TempDirectory)/$zip" | sha256sum --check
+      unzip -o -q "$(Agent.TempDirectory)/$zip" terraform -d "$(Agent.ToolsDirectory)/terraform"
+      echo "##vso[task.prependpath]$(Agent.ToolsDirectory)/terraform"
+    displayName: Install Terraform ${{ parameters.tf_version }}
+    env:
+      TF_VERSION: ${{ parameters.tf_version }}
+      TF_SHA256: ${{ parameters.tf_sha256 }}
+
+  - bash: |
+      set -euo pipefail
+      state_key="$(echo "${CONFIG}-${VAR_FILE%.tfvars}" | tr '/' '-').terraform.tfstate"
+      terraform init -input=false \
+        -backend-config="resource_group_name=${TF_STATE_RESOURCE_GROUP}" \
+        -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+        -backend-config="container_name=tfstate" \
+        -backend-config="key=${state_key}" \
+        -backend-config="use_azuread_auth=true"
+      terraform validate
+    displayName: Terraform init and validate
+    workingDirectory: configs/${{ parameters.config }}
+    env:
+      CONFIG: ${{ parameters.config }}
+      VAR_FILE: ${{ parameters.var_file }}
+      ARM_USE_MSI: true
+      ARM_TENANT_ID: $(tenant_id)
+      ARM_SUBSCRIPTION_ID: $(tf_state_subscription_id)
+      TF_STATE_RESOURCE_GROUP: $(tf_state_resource_group)
+      TF_STATE_STORAGE_ACCOUNT: $(tf_state_storage_account)
+      TF_IN_AUTOMATION: true
+
+  - ${{ if ne(parameters.command, 'apply') }}:
+      - bash: |
+          set -euo pipefail
+          terraform plan -input=false -lock-timeout=10m ${DESTROY_FLAG} \
+            -var-file="environments/${VAR_FILE}" -out="$(Build.ArtifactStagingDirectory)/terraform.tfplan"
+        displayName: Terraform plan
+        workingDirectory: configs/${{ parameters.config }}
+        env:
+          VAR_FILE: ${{ parameters.var_file }}
+          ${{ if eq(parameters.command, 'destroy-plan') }}:
+            DESTROY_FLAG: -destroy
+          ${{ else }}:
+            DESTROY_FLAG: ""
+          ARM_USE_MSI: true
+          ARM_TENANT_ID: $(tenant_id)
+          ARM_SUBSCRIPTION_ID: $(tf_state_subscription_id)
+          TF_IN_AUTOMATION: true
+          # Secrets come from the variable group (ideally Key Vault-linked); unset ones are ignored.
+          TF_VAR_express_route_authorization_key: $(express_route_authorization_key)
+          TF_VAR_express_route_secondary_authorization_key: $(express_route_secondary_authorization_key)
+          TF_VAR_vpn_shared_key: $(vpn_shared_key)
+          TF_VAR_agent_pat_token: $(agent_pat_token)
+          TF_VAR_scaleset_pat_token: $(scaleset_pat_token)
+
+      # The plan file can contain secrets: keep the artifact's retention short and the project private.
+      - publish: $(Build.ArtifactStagingDirectory)/terraform.tfplan
+        artifact: tfplan
+        displayName: Publish plan
+
+  - ${{ if eq(parameters.command, 'apply') }}:
+      - download: current
+        artifact: tfplan
+        displayName: Download plan
+
+      # Applies exactly the plan that was reviewed; fails if the state moved since.
+      - bash: |
+          set -euo pipefail
+          terraform apply -input=false -lock-timeout=10m "$(Pipeline.Workspace)/tfplan/terraform.tfplan"
+        displayName: Terraform apply
+        workingDirectory: configs/${{ parameters.config }}
+        env:
+          ARM_USE_MSI: true
+          ARM_TENANT_ID: $(tenant_id)
+          ARM_SUBSCRIPTION_ID: $(tf_state_subscription_id)
+          TF_IN_AUTOMATION: true
