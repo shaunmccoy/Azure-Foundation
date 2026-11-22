@@ -1,0 +1,20 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "resources": [
+    {
+      "name": "${event_grid_name}",
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2020-04-01-preview",
+      "location": "${location}",
+      "tags": {
+          ${tags_json}
+      },
+      "properties": {
+          "source": "${event_source_resource_id}",
+          "topicType": "${event_source_topic_type}"
+        }
+    }
+  ]
+}

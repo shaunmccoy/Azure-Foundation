@@ -1,0 +1,79 @@
+{
+    "location": {
+        "value": "${location}"
+    },
+    "workspaceName": {
+        "value": "${ml_workspace_name}"
+    },
+    "resourceGroupName": {
+        "value": "${resource_group_name}"
+    },
+    "sku": {
+        "value": "${ml_workplace_sku}"
+    },
+    "tagValues": {
+        "value": {
+            ${tags_json}
+        }
+    },
+    "keyVaultName": {
+        "value": "${key_vault_name}"
+    },
+    "keyVaultResourceGroupName": {
+        "value": "${key_vault_rg_name}"
+    },
+    "storageAccountName": {
+        "value": "${storage_account_name}"
+    },
+    "storageAccountResourceGroupName": {
+        "value": "${storage_account_rg_name}"
+    },
+    "applicationInsightsName": {
+        "value": "${app_insights_name}"
+    },
+    "applicationInsightsResourceGroupName": {
+        "value": "${app_insights_rg_name}"
+    },
+    "storageAccountOption": {
+        "value": "existing"
+    },
+    "keyVaultOption": {
+        "value": "existing"
+    },
+    "applicationInsightsOption": {
+        "value": "existing"
+    },
+    "containerRegistryOption": {
+        "value": "existing"
+    },
+    "containerRegistryName": {
+        "value": "${container_registry_name}"
+    },
+    "containerRegistryResourceGroupName": {
+        "value": "${container_registry_rg_name}"
+    },
+    "privateEndpointName": {
+        "value": "${private_endpoint_name}"
+    },
+    "subnetOption": {
+        "value": "existing"
+    },
+    "subnetName": {
+        "value": "${subnet_name}"
+    },
+    "vnetOption": {
+        "value": "existing"
+    },
+    "vnetName": {
+        "value": "${vnet_name}"
+    },
+    "vnetResourceGroupName": {
+        "value": "${vnet_rg_name}"
+    },
+    "privateEndpointType": {
+        "value": "AutoApproval"
+    },
+    "privateEndpointResourceGroupName": {
+        "value": "${private_endpoint_rg_name}"
+    }
+}

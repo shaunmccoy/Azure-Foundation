@@ -9,7 +9,7 @@ data "azurerm_subnet" "ase_subnet" {
 
 
 module "ase_nsg" {
-  source = "../modules/nsg/"
+  source = "../../"
   nsg_name                = var.nsg_name
   resource_group_name     = var.resource_group_name
   tags                    = var.tags
@@ -23,7 +23,7 @@ resource "azurerm_subnet_network_security_group_association" "ase_nsg_associatio
 
 
 module "ase_udr" {
-  source                  = "../modules/route-table/"
+  source = "../../../route-table"
   route_table_name        = var.route_table_name
   resource_group_name     = var.resource_group_name
   tags                    = var.tags
