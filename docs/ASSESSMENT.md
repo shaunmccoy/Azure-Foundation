@@ -26,12 +26,15 @@ not a port; reconcile it with any existing API Management code you have elsewher
 * **Network:** internal VNet mode. The module builds the NSG the service needs in each region and attaches it before the service is created.
 * **Security:** TLS 1.2+ with weak ciphers off towards clients and backends, management API key access off, portal sign-up off, minimum management API version pinned, certificates and named values read from Key Vault with a managed identity.
 * **Observability:** resource logs to Log Analytics, Application Insights with W3C correlation and Entra ID ingestion, alerts for capacity, 5xx, slow backends, unauthorized spikes and Azure Resource Health.
-* **Safety:** delete lock on by default, soft-deleted services are recovered rather than purged, a per-region switch to take a gateway out of rotation for failover drills.
+* **Safety:** delete lock on by default, and soft-deleted services are recovered rather than purged. For a failover drill, disable that region's endpoint in `configs/global-ingress`; Azure does not allow switching off a regional gateway in internal mode.
 
 Things to know:
 
 * The management plane, developer portal and configuration live in the primary region only. If that region is lost, other regions keep serving with the last configuration, but nothing can be changed until it returns.
-* Every regional subnet of a multi-region instance has to be in the instance's own subscription. The original kept production and DR spokes in separate subscriptions, so the East US 2 API spoke is now deployed into the production API subscription (`subscription_baseline_enabled = false` avoids duplicate subscription-wide settings). Confirm this constraint against current Microsoft documentation for your case.
+* Every regional subnet of a multi-region instance has to be in the instance's own subscription and in the region it serves. Microsoft's multi-region guide says to "set up a virtual network and subnet in the location that you plan to add, and within the same subscription". The original kept production and DR spokes in separate subscriptions, so the East US 2 API spoke is now deployed into the production API subscription (`subscription_baseline_enabled = false` avoids duplicate subscription-wide settings).
+* In internal mode Azure does no cross-region routing for you; the Application Gateways and Traffic Manager in this repository do it.
+* A /28 API Management subnet tops out at 5 units and a /27 at 13, which is why the example spokes use /27.
+* The module no longer attaches its own public IP by default: Azure stopped requiring one for internal mode in May 2024. Set `public_ip_enabled` to own the address.
 * Creating or adding a region to a VNet-injected service often takes more than an hour.
 * APIs, products and policies are not defined here.
 

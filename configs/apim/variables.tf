@@ -26,7 +26,7 @@ variable "capacity" {
 }
 
 variable "zones" {
-  description = "Availability zones in the primary region (Premium only)."
+  description = "Availability zones in the primary region (Premium only). Empty lets Azure place units across zones automatically."
   type        = list(string)
   default     = ["1", "2", "3"]
 }
@@ -67,7 +67,7 @@ variable "additional_regions" {
 }
 
 variable "primary_gateway_disabled" {
-  description = "Take the primary region's gateway out of rotation for a failover drill."
+  description = "Take the primary region's gateway out of rotation. External mode only; in Internal mode disable the region's endpoint in configs/global-ingress instead."
   type        = bool
   default     = false
 }

@@ -61,6 +61,11 @@ locals {
         source      = "VirtualNetwork", destination = "AzureActiveDirectory"
         description = "Managed identity tokens and Entra ID sign-in"
       }
+      "Allow-CertValidation-Outbound" = {
+        priority    = 170, direction = "Outbound", protocol = "Tcp", ports = ["80"]
+        source      = "VirtualNetwork", destination = "Internet"
+        description = "Validation and management of certificates"
+      }
       "Allow-Sync-Tcp-Outbound" = {
         priority    = 150, direction = "Outbound", protocol = "Tcp", ports = ["6380-6383"]
         source      = "VirtualNetwork", destination = "VirtualNetwork"

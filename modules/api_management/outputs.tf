@@ -36,8 +36,14 @@ output "private_ip_addresses" {
 }
 
 output "public_ip_addresses" {
-  description = "Public IP per region (management traffic in Internal mode)."
-  value       = { for location, ip in azurerm_public_ip.this : location => ip.ip_address }
+  description = "Public IPs per region, whether Azure-managed or your own (management traffic only in Internal mode)."
+  value = merge(
+    { (var.location) = azurerm_api_management.this.public_ip_addresses },
+    {
+      for location in keys(var.additional_locations) :
+      location => one([for l in azurerm_api_management.this.additional_location : l.public_ip_addresses if l.location == location])
+    },
+  )
 }
 
 output "management_api_url" {

@@ -27,10 +27,10 @@ resource "azurerm_role_assignment" "key_vault" {
   principal_type       = "ServicePrincipal"
 }
 
-# VNet-injected (stv2) instances need a Standard public IP with a DNS label in each region,
-# even in Internal mode, where it carries management-plane traffic only.
+# Optional. Since May 2024 a VNet-injected instance no longer needs a customer-owned public IP:
+# Internal mode needs none, and External mode gets an Azure-managed one unless you supply it.
 resource "azurerm_public_ip" "this" {
-  for_each = local.regions
+  for_each = var.public_ip_enabled ? local.regions : {}
 
   name                = "${var.name}-PIP-${upper(each.key)}"
   resource_group_name = var.resource_group_name
@@ -55,7 +55,7 @@ resource "azurerm_api_management" "this" {
   tags                = var.tags
 
   virtual_network_type = var.virtual_network_type
-  public_ip_address_id = azurerm_public_ip.this[var.location].id
+  public_ip_address_id = var.public_ip_enabled ? azurerm_public_ip.this[var.location].id : null
 
   virtual_network_configuration {
     subnet_id = var.subnet_id
@@ -69,7 +69,7 @@ resource "azurerm_api_management" "this" {
       capacity             = additional_location.value.capacity
       zones                = additional_location.value.zones
       gateway_disabled     = additional_location.value.gateway_disabled
-      public_ip_address_id = azurerm_public_ip.this[additional_location.key].id
+      public_ip_address_id = var.public_ip_enabled ? azurerm_public_ip.this[additional_location.key].id : null
 
       virtual_network_configuration {
         subnet_id = additional_location.value.subnet_id

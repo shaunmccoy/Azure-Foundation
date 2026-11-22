@@ -51,7 +51,7 @@ variable "capacity" {
 }
 
 variable "zones" {
-  description = "Availability zones for the primary region (Premium only). Capacity must divide evenly across them."
+  description = "Availability zones for the primary region (Premium only). Capacity must divide evenly across them. Empty lets Azure place the units across zones automatically."
   type        = list(string)
   default     = ["1", "2", "3"]
 
@@ -88,6 +88,11 @@ variable "additional_locations" {
   default = {}
 
   validation {
+    condition     = var.virtual_network_type != "Internal" || alltrue([for l in values(var.additional_locations) : !l.gateway_disabled])
+    error_message = "gateway_disabled is not supported in Internal mode. Take a region out of rotation at the load balancer in front (configs/global-ingress) instead."
+  }
+
+  validation {
     condition     = length(var.additional_locations) == 0 || var.sku_tier == "Premium"
     error_message = "additional_locations needs the Premium tier."
   }
@@ -104,7 +109,7 @@ variable "additional_locations" {
 }
 
 variable "primary_gateway_disabled" {
-  description = "Take the primary region's gateway out of service (failover drill). Only valid with additional_locations."
+  description = "Take the primary region's gateway out of service (failover drill). External mode with additional_locations only; Azure does not support it in Internal mode."
   type        = bool
   default     = false
 
@@ -112,6 +117,17 @@ variable "primary_gateway_disabled" {
     condition     = !var.primary_gateway_disabled || length(var.additional_locations) > 0
     error_message = "primary_gateway_disabled needs at least one additional location to carry traffic."
   }
+
+  validation {
+    condition     = !var.primary_gateway_disabled || var.virtual_network_type != "Internal"
+    error_message = "primary_gateway_disabled is not supported in Internal mode. Take a region out of rotation at the load balancer in front (configs/global-ingress) instead."
+  }
+}
+
+variable "public_ip_enabled" {
+  description = "Create and attach your own Standard public IP in each region. Not needed in Internal mode; in External mode Azure manages one unless you want to own the address."
+  type        = bool
+  default     = false
 }
 
 variable "manage_subnet_nsg" {
