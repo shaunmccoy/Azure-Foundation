@@ -1,0 +1,32 @@
+#!/bin/bash
+# Registers and starts the agent that is pre-installed in the image under ~/agent.
+set -euo pipefail
+
+AGENT_USER="${agent_user}"
+AGENT_DIR="/home/$AGENT_USER/agent"
+
+cd "$AGENT_DIR"
+runuser -u "$AGENT_USER" -- ./config.sh --unattended --acceptTeeEula \
+  --agent "$(hostname)" \
+  --url "${devops_url}" \
+  --work "/home/$AGENT_USER/work" \
+  --auth pat --token '${agent_pat}' \
+  --pool '${agent_pool_name}' \
+  --projectName '${devops_project_name}'
+
+cat <<'ENV' >>.env
+LANG=C.UTF-8
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+%{ if http_proxy != "" || https_proxy != "" ~}
+no_proxy=169.254.169.254,168.63.129.16
+%{ endif ~}
+ENV
+chown "$AGENT_USER:$AGENT_USER" .env
+
+./svc.sh install "$AGENT_USER"
+./svc.sh start

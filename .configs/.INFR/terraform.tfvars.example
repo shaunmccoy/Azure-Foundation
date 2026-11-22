@@ -1,8 +1,0 @@
-# Copy to terraform.tfvars (git-ignored) and fill in.
-subscription_id     = "00000000-0000-0000-0000-000000000000"
-hub_subscription_id = "00000000-0000-0000-0000-000000000000"
-location            = "eastus2"
-env                 = "dev"
-tla                 = "abc"
-business_unit       = "FIN"
-cost_center         = "12345"

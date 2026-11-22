@@ -1,0 +1,82 @@
+#!/bin/bash
+# First-boot setup for RHEL-family Azure Pipelines agents. Runs as root via cloud-init.
+# Output: /var/log/cloud-init-output.log
+set -euxo pipefail
+
+AGENT_USER="${agent_user}"
+AGENT_HOME="$(getent passwd "$AGENT_USER" | cut -d: -f6)"
+AGENT_VERSION="${agent_version}"
+
+%{ if http_proxy != "" || https_proxy != "" ~}
+cat <<'PROXY' >>/etc/environment
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+no_proxy=${no_proxy}
+PROXY
+%{ if http_proxy != "" ~}
+export http_proxy="${http_proxy}"
+%{ endif ~}
+%{ if https_proxy != "" ~}
+export https_proxy="${https_proxy}"
+%{ endif ~}
+export no_proxy="${no_proxy}"
+%{ endif ~}
+
+dnf -y update
+dnf -y install ca-certificates curl git openssl traceroute unzip wget lvm2 dnf-plugins-core
+
+# Microsoft repository: Azure CLI and PowerShell
+MAJOR="$(rpm -E %rhel)"
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+dnf -y install "https://packages.microsoft.com/config/rhel/$MAJOR/packages-microsoft-prod.rpm"
+
+# Docker repository
+dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+dnf -y install azure-cli powershell docker-ce docker-ce-cli containerd.io
+systemctl enable --now docker
+usermod -s /bin/bash -aG docker "$AGENT_USER"
+
+# Azure Pipelines agents
+PACKAGE="vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+curl -fsSL "https://download.agent.dev.azure.com/agent/$AGENT_VERSION/$PACKAGE" -o "/tmp/$PACKAGE"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+for i in $(seq 1 ${nbr_agents}); do
+  AGENT_DIR="$AGENT_HOME/agent$i"
+  install -d -o "$AGENT_USER" -g "$AGENT_USER" "$AGENT_DIR"
+  runuser -u "$AGENT_USER" -- tar -xzf "/tmp/$PACKAGE" -C "$AGENT_DIR"
+
+  cd "$AGENT_DIR"
+  ./bin/installdependencies.sh
+  set +x # keep the token out of the cloud-init log
+  runuser -u "$AGENT_USER" -- ./config.sh --unattended --acceptTeeEula \
+    --agent "${agent_name}-agent-$i-$STAMP" \
+    --url "${devops_url}" \
+    --work _work \
+    --auth pat --token '${agent_pat}' \
+    --pool '${agent_pool_name}' \
+    --projectName '${devops_project_name}'
+  set -x
+
+%{ if http_proxy != "" || https_proxy != "" ~}
+  cat <<'PROXY' >>.env
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+no_proxy=${no_proxy}
+PROXY
+%{ endif ~}
+
+  ./svc.sh install "$AGENT_USER"
+  ./svc.sh start
+done
+
+rm -f "/tmp/$PACKAGE"

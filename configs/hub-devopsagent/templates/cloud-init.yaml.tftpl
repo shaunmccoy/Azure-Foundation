@@ -1,0 +1,10 @@
+#cloud-config
+write_files:
+  - path: /root/init.sh
+    owner: root:root
+    content: "${init_script}"
+    encoding: b64
+    permissions: '0700'
+runcmd:
+  - ["/bin/bash", "-c", "/root/init.sh"]
+  - ["/bin/bash", "-c", "rm -f /root/init.sh"]

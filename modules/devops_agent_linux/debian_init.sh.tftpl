@@ -1,0 +1,99 @@
+#!/bin/bash
+# First-boot setup for Debian/Ubuntu Azure Pipelines agents. Runs as root via cloud-init.
+# Output: /var/log/cloud-init-output.log
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+AGENT_USER="${agent_user}"
+AGENT_HOME="$(getent passwd "$AGENT_USER" | cut -d: -f6)"
+AGENT_VERSION="${agent_version}"
+
+%{ if http_proxy != "" || https_proxy != "" ~}
+cat <<'PROXY' >>/etc/environment
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+no_proxy=${no_proxy}
+PROXY
+%{ if http_proxy != "" ~}
+export http_proxy="${http_proxy}"
+%{ endif ~}
+%{ if https_proxy != "" ~}
+export https_proxy="${https_proxy}"
+%{ endif ~}
+export no_proxy="${no_proxy}"
+%{ endif ~}
+
+apt-get update
+apt-get upgrade -y
+apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release git openssl traceroute unzip wget
+
+install -d -m 0755 /etc/apt/keyrings
+CODENAME="$(lsb_release -cs)"
+RELEASE="$(lsb_release -rs)"
+DISTRO="$(lsb_release -is | tr '[:upper:]' '[:lower:]')"
+ARCH="$(dpkg --print-architecture)"
+
+# Microsoft repository: Azure CLI and PowerShell
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
+chmod a+r /etc/apt/keyrings/microsoft.gpg
+echo "deb [arch=$ARCH signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $CODENAME main" >/etc/apt/sources.list.d/azure-cli.list
+echo "deb [arch=$ARCH signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/$DISTRO/$RELEASE/prod $CODENAME main" >/etc/apt/sources.list.d/microsoft-prod.list
+
+# Docker repository
+curl -fsSL "https://download.docker.com/linux/$DISTRO/gpg" -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$ARCH signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$DISTRO $CODENAME stable" >/etc/apt/sources.list.d/docker.list
+
+apt-get update
+apt-get install -y azure-cli powershell docker-ce docker-ce-cli containerd.io
+systemctl enable --now docker
+usermod -s /bin/bash -aG docker "$AGENT_USER"
+
+# AzCopy
+curl -fsSL https://aka.ms/downloadazcopy-v10-linux -o /tmp/azcopy.tar.gz
+tar -xzf /tmp/azcopy.tar.gz -C /tmp
+install -m 0755 /tmp/azcopy_linux_*/azcopy /usr/local/bin/azcopy
+rm -rf /tmp/azcopy.tar.gz /tmp/azcopy_linux_*
+
+# Azure Pipelines agents
+PACKAGE="vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+curl -fsSL "https://download.agent.dev.azure.com/agent/$AGENT_VERSION/$PACKAGE" -o "/tmp/$PACKAGE"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+for i in $(seq 1 ${nbr_agents}); do
+  AGENT_DIR="$AGENT_HOME/agent$i"
+  install -d -o "$AGENT_USER" -g "$AGENT_USER" "$AGENT_DIR"
+  runuser -u "$AGENT_USER" -- tar -xzf "/tmp/$PACKAGE" -C "$AGENT_DIR"
+
+  cd "$AGENT_DIR"
+  set +x # keep the token out of the cloud-init log
+  runuser -u "$AGENT_USER" -- ./config.sh --unattended --acceptTeeEula \
+    --agent "${agent_name}-agent-$i-$STAMP" \
+    --url "${devops_url}" \
+    --work _work \
+    --auth pat --token '${agent_pat}' \
+    --pool '${agent_pool_name}' \
+    --projectName '${devops_project_name}'
+  set -x
+
+%{ if http_proxy != "" || https_proxy != "" ~}
+  cat <<'PROXY' >>.env
+%{ if http_proxy != "" ~}
+http_proxy=${http_proxy}
+%{ endif ~}
+%{ if https_proxy != "" ~}
+https_proxy=${https_proxy}
+%{ endif ~}
+no_proxy=${no_proxy}
+PROXY
+%{ endif ~}
+
+  ./svc.sh install "$AGENT_USER"
+  ./svc.sh start
+done
+
+rm -f "/tmp/$PACKAGE"
