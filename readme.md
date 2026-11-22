@@ -35,8 +35,14 @@ Targets Terraform 1.14+ (tested with 1.17.2) and the AzureRM provider 5.x (teste
 | `configs/hub-adds`, `hub-infoblox`, `hub-checkpoint`, `hub-devopsagent`, `test-vm` | Domain controllers, DNS appliances, firewall resource group, build agents, connectivity test VMs |
 | `modules/` | Reusable modules used by the configs |
 | `pipelines/` | Azure DevOps plan / approve / apply pipelines |
-| `scripts/validate.sh` | Format check, `terraform validate` and offline tests for everything |
+| `scripts/validate.sh` | Format check, `terraform validate` and offline tests for `modules/` and `configs/` |
 | `docs/` | [Assessment and changes](docs/ASSESSMENT.md), [scrub report](docs/SCRUB-REPORT.md) |
+| `PCET-SRE/` | Imported snapshot: an older, standalone library of Terraform modules (`azurerm/<module>`) and Ansible provisioners. Not used by `configs/` |
+| `PCET-SRE-Tests/` | Imported snapshot: test configurations for the `PCET-SRE` modules, referenced as `../../../PCET-SRE/azurerm/<module>` |
+| `AppGateway/` | Imported snapshot: standalone application gateway, public IP and private-link storage modules with their own test configs |
+
+The three imported folders are kept as they were written (2021-era Terraform and AzureRM). They are
+independent of the landing zone above, are not modernised, and are skipped by `scripts/validate.sh`.
 
 Each config has `environments/*.tfvars`, one file per region and environment (`CUS-PROD`,
 `EU2-PROD`, `CUS-UAT`, ...). All IDs, addresses and names in them are placeholders.

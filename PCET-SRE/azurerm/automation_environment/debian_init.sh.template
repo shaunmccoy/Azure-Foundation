@@ -1,0 +1,101 @@
+#!/bin/bash
+set -x
+
+sudo apt-get --assume-yes update
+sudo apt-get upgrade -y
+
+sudo apt-get install -y \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gnupg-agent \
+  software-properties-common \
+  libunwind-dev \
+  openssl \
+  git \
+  traceroute \
+  unzip \
+  python \
+  python-ctypes \
+  libc6 \
+  libpam-modules \
+  lsb-release \
+  gnupg
+
+
+cp /etc/environment /tmp/environment
+cat <<EOF >>/tmp/environment
+http_proxy=${http_proxy}
+https_proxy=${https_proxy}
+no_proxy=${no_proxy_udr}
+EOF
+
+sudo cp /tmp/environment /etc/environment
+echo /etc/environment content:
+cat /etc/environment
+
+export http_proxy=${http_proxy}
+export https_proxy=${https_proxy}
+export no_proxy=${no_proxy_udr}
+
+
+#Azure CLI
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc.gpg > /dev/null
+AZ_REPO=$(lsb_release -cs)
+sudo echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+sudo apt-get --assume-yes update
+sudo apt-get install -y azure-cli 
+
+#Azure AZCopy
+mkdir -p /tmp/azcopy
+cd /tmp/azcopy
+wget -O azcopy.tar.gz https://aka.ms/downloadazcopy-v10-linux
+tar -xf azcopy.tar.gz
+cd azcopy_linux_amd64*
+sudo cp azcopy /usr/bin/azcopy
+sudo chmod 0755 /usr/bin/azcopy
+rm -rf /tmp/azcopy
+
+#Powershell Core
+mkdir -p /tmp/powershell
+cd /tmp/powershell
+wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt-get update
+sudo add-apt-repository universe
+sudo apt-get install -y powershell
+cd /tmp
+sudo pwsh -command "Install-Module AZ -Force -Scope AllUsers -Verbose"
+rm -rf /tmp/powershell
+
+#Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository \
+  "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) \
+  stable"
+sudo apt-get --assume-yes update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io 
+
+sudo systemctl enable docker
+sudo usermod -a -G docker ${adminuser}
+
+wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w ${workspace_id} -s ${workspace_primary_key}
+
+# It takes some time for these files to appear after the agent install script finishes
+echo "Waiting on onboarding.py ..."
+until [ -f /opt/microsoft/omsconfig/modules/nxOMSAutomationWorker/DSCResources/MSFT_nxOMSAutomationWorkerResource/automationworker/scripts/onboarding.py ]
+do
+     sleep 5
+done
+sleep 1
+
+sudo python /opt/microsoft/omsconfig/modules/nxOMSAutomationWorker/DSCResources/MSFT_nxOMSAutomationWorkerResource/automationworker/scripts/onboarding.py --register -w ${workspace_id} -k ${account_shared_key} -g ${hybrid_worker_group_name} -e ${account_endpoint}
+
+echo "Waiting on require_runbook_signature.py ..."
+until [ -f /opt/microsoft/omsconfig/modules/nxOMSAutomationWorker/DSCResources/MSFT_nxOMSAutomationWorkerResource/automationworker/scripts/require_runbook_signature.py ]
+do
+     sleep 5
+done
+sleep 1
+sudo python /opt/microsoft/omsconfig/modules/nxOMSAutomationWorker/DSCResources/MSFT_nxOMSAutomationWorkerResource/automationworker/scripts/require_runbook_signature.py --false ${workspace_id}

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Readme.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="load-balancer">Load Balancer</h1>
+<p>This module will define standard internal load balancer along with log diagnostcs and private endpoint that go with it.</p>
+<h2 id="variables">Variables</h2>
+<p>This section details variable inputs for this module.</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Variable Name</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Load Balancer Variables</td>
+<td>load_balancer_name</td>
+<td>Y</td>
+<td>Name for the load balancer</td>
+</tr>
+<tr>
+<td></td>
+<td>frontend_ip_config</td>
+<td></td>
+<td>See Frontend IP Configuration section for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>backend_address_pool_list</td>
+<td></td>
+<td>See Backend address Pools section for details.</td>
+</tr>
+<tr>
+<td>Common</td>
+<td>resource_group_name</td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>location</td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>tags</td>
+<td></td>
+<td>Defaults to no tags.</td>
+</tr>
+<tr>
+<td>Log Diagnostic Variables</td>
+<td>log_analytics_workspace_id</td>
+<td></td>
+<td>Will not set up log diagnostics if omitted</td>
+</tr>
+<tr>
+<td></td>
+<td>diagnostics_name</td>
+<td></td>
+<td>Defaults if not provided</td>
+</tr>
+<tr>
+<td></td>
+<td>diagnostic_log_category_list</td>
+<td></td>
+<td>Defaults to all available log categories</td>
+</tr>
+<tr>
+<td></td>
+<td>log_analytics_retention_days</td>
+<td></td>
+<td>Defaults to 0 -- for all time</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Backend address pool names in the list provided must be unique.</p>
+</blockquote>
+<h3 id="frontend-ip-configuration">Frontend IP Configuration</h3>
+<p>Input for variable <code>frontend_ip_config</code> is complex.  An example follows:</p>
+<pre class="hljs"><code><div>frontend_ip_config = {
+    MyIpOne = {
+        subnet_id           = &quot;/subscriptions/fb55307e-SCRUBBED&quot;
+        private_ip_address  = &quot;10.0.1.4&quot;
+    }
+}
+
+</div></code></pre>
+<blockquote>
+<p><code>private_ip_address</code> can be blank (<code>&quot;&quot;</code>). If the private ip is blank, it will be dynamically determined from the subnet id provided. If provided, the private ip must fit in the subnet listed.</p>
+</blockquote>
+<blockquote>
+<p>Multiple Front-end IP configurations are fine.</p>
+</blockquote>
+<ul>
+<li>They must have unique names (<code>MyIpOne</code> and <code>MyIpTwo</code>)</li>
+<li>The private IP address must be unique</li>
+</ul>
+<pre class="hljs"><code><div>frontend_ip_config = {
+    MyIpOne = {
+        subnet_id           = &quot;/subscriptions/fb55307e-SCRUBBED&quot;
+        private_ip_address  = &quot;10.0.1.4&quot;
+    }
+    MyIpTwo = {
+        subnet_id           = &quot;/subscriptions/fb55307e-SCRUBBED&quot;
+        private_ip_address  = &quot;10.0.1.5&quot;
+    }
+}
+
+</div></code></pre>
+<h3 id="backend-address-pools">Backend address Pools</h3>
+<p>This module can create simple backend address pools meant to be used with virtual machine scale sets or VMs. For backend address pools that specifically list member virtual machines or reference VM scale sets, those should be added separately.  An example follows:</p>
+<pre class="hljs"><code><div>resource &quot;azurerm_network_interface_backend_address_pool_association&quot; &quot;example&quot; {
+  network_interface_id    = azurerm_network_interface.testers.id
+  ip_configuration_name   = &quot;fred-test-vm-NIC1-IPConfig&quot;
+  backend_address_pool_id = module.load_balancer.load_balancer_backend_pool_name_id_map[&quot;backend1&quot;]
+}
+</div></code></pre>
+<h3 id="nat-pools">NAT Pools</h3>
+<p>This module can create nat pools that are associated with the load balancer.</p>
+<p>Input for variable <code>nat_pool_config</code> is complex.  An example follows:</p>
+<pre class="hljs"><code><div>nat_pool_config = {
+    MyNatPool1 = {
+        frontend_ip_configuration_name  = &quot;MyIpOne&quot;
+        protocol                        = &quot;Tcp&quot;     # Values are Tcp or Udp
+        frontend_port_start             = 80
+        frontend_port_end               = 81
+        backend_port                    = 80
+    }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Multiple NAT Pool configurations are fine.</p>
+</blockquote>
+<ul>
+<li>They must have unique names (<code>MyNatPool1</code> and <code>MyNatPool2</code>)</li>
+<li>The <code>frontend_ip_configuration_name</code> must be defined in <code>frontend_ip_config</code></li>
+</ul>
+<h3 id="nat-rules">NAT Rules</h3>
+<p>This module can create nat rules that are associated with the load balancer.</p>
+<p>Input for variable <code>nat_rule_config</code> is complex.  An example follows:</p>
+<pre class="hljs"><code><div>nat_rule_config = {
+    MyNatRule2 = {
+        frontend_ip_configuration_name  = &quot;MyIpTwo&quot;
+        protocol                        = &quot;Tcp&quot;         # Values are Tcp, Udp, or All
+        frontend_port                   = 80
+        backend_port                    = 80
+    }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Multiple NAT Rule configurations are fine.</p>
+</blockquote>
+<ul>
+<li>They must have unique names (<code>MyNatRule1</code> and <code>MyNatRule2</code>)</li>
+<li>The <code>frontend_ip_configuration_name</code> must be defined in <code>frontend_ip_config</code></li>
+</ul>
+<h3 id="load-balancer-probes">Load Balancer Probes</h3>
+<p>This module can create load balancer probes that are associated with the load balancer.</p>
+<p>Input for variable <code>probe_config</code> is complex.  An example follows:</p>
+<pre class="hljs"><code><div>probe_config = {
+    MyProbe1 = {
+        port                            = 23
+        protocol                        = &quot;Tcp&quot;         # Allowed values are Http, Https, or Tcp
+        request_path                    = &quot;&quot;
+    }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Multiple load balancer probe configurations are fine.</p>
+</blockquote>
+<ul>
+<li>They must have unique names (<code>MyProbe1</code> and <code>MyProbe2</code>)</li>
+<li>If the protocol is <code>http</code> or <code>https</code>, the <code>request_path</code> must not be blank.</li>
+</ul>
+<h3 id="load-balancer-rules">Load Balancer Rules</h3>
+<p>This module can create load balancer rules that are associated with the load balancer.</p>
+<p>Input for variable <code>lb_rule_config</code> is complex.  An example follows:</p>
+<pre class="hljs"><code><div>lb_rule_config = {
+    LbRule1 = {
+        frontend_ip_configuration_name  = &quot;MyIpTwo&quot;
+        protocol                        = &quot;Tcp&quot;         # Values are Tcp, Udp, or All
+        frontend_port                   = 23
+        backend_address_pool_name       = &quot;backend2&quot;
+        backend_port                    = 23
+        probe_name                      = &quot;MyProbe1&quot;
+    }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Multiple load balancer rule configurations are fine.</p>
+</blockquote>
+<ul>
+<li>They must have unique names (<code>LbRule1</code> and <code>LbRule2</code>)</li>
+<li>If not blank, the <code>backend_address_pool_name</code> must be defined with <code>backend_address_pool_list</code></li>
+<li>If not blank, the <code>probe_name</code> must be defined with <code>probe_config</code></li>
+</ul>
+<h2 id="output-variables">Output Variables</h2>
+<p>This section details variables that are exported and referencable after the module call.</p>
+<table>
+<thead>
+<tr>
+<th>Variable Name</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>load_balancer_resource_id</td>
+<td>Load balancer resource id</td>
+</tr>
+<tr>
+<td>load_balancer_backend_pool_name_id_map</td>
+<td>backend address pool name to resource id mapping</td>
+</tr>
+<tr>
+<td>nat_pool_name_id_map</td>
+<td>nat pool pool name to resource id mapping</td>
+</tr>
+<tr>
+<td>nat_rule_name_id_map</td>
+<td>nat rule pool name to resource id mapping</td>
+</tr>
+<tr>
+<td>probe_name_id_map</td>
+<td>probe name to resource id mapping</td>
+</tr>
+</tbody>
+</table>
+<h2 id="release-notes">Release Notes</h2>
+<blockquote>
+<p>Initial Release</p>
+</blockquote>
+<h2 id="example-usage">Example Usage</h2>
+<pre class="hljs"><code><div>module &quot;load_balancer&quot; {
+    source                          = &quot;git::https://dev.azure.com/example-org/PCET-SRE/_git/terraform_modules//azurerm/load_balancer?ref=1.0.1&quot;
+
+    backend_address_pool_list       = var.backend_address_pool_list
+    frontend_ip_config              = var.frontend_ip_config
+    nat_pool_config                 = var.nat_pool_config
+    nat_rule_config                 = var.nat_rule_config
+    probe_config                    = var.probe_config
+    lb_rule_config                  = var.lb_rule_config
+    load_balancer_name              = var.load_balancer_name
+    log_analytics_workspace_id      = var.log_analytics_workspace_id
+    resource_group_name             = azurerm_resource_group.test_rg.name
+    location                        = var.location
+    tags                            = var.tags
+
+
+}
+
+# To add VMs to a backend address pool, you must do the association as follows.
+resource &quot;azurerm_network_interface_backend_address_pool_association&quot; &quot;example&quot; {
+  network_interface_id    = azurerm_network_interface.testers.id
+  ip_configuration_name   = &quot;fred-test-vm-NIC1-IPConfig&quot;
+  backend_address_pool_id = module.load_balancer.load_balancer_backend_pool_name_id_map[&quot;backend1&quot;]
+}
+</div></code></pre>
+
+</body>
+</html>

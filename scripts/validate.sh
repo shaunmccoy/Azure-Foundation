@@ -6,7 +6,9 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
-terraform fmt -check -recursive -diff
+# Only the landing zone is format-checked. PCET-SRE, PCET-SRE-Tests and AppGateway are imported
+# snapshots kept as they were written (older Terraform, not fmt-clean) and are not validated here.
+terraform fmt -check -recursive -diff modules configs
 
 if [ "$#" -gt 0 ]; then
   dirs=("$@")

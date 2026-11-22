@@ -1,0 +1,71 @@
+{
+    "name": {
+        "value": "${data_factory_name}"
+    },
+    "version": {
+        "value": "V2"
+    },
+    "location": {
+        "value": "${location}"
+    },
+    "vNetEnabled": {
+        "value": true
+    },
+    "publicNetworkAccess": {
+        "value": false
+    },
+    "gitConfigureLater": {
+        "value": ${gitConfigureLater}
+    },
+    "gitRepoType": {
+        "value": "FactoryVSTSConfiguration"
+    },
+    "gitAccountName": {
+        "value": "${devops_account_name}"
+    },
+    "gitProjectName": {
+        "value": "${devops_project_name}"
+    },
+    "gitRepositoryName": {
+        "value": "${devops_repo_name}"
+    },
+    "gitCollaborationBranch": {
+        "value": "${devops_branch_name}"
+    },
+    "gitRootFolder": {
+        "value": "${devops_root_folder}"
+    },
+    "tagsByResource": {
+        "value": {
+            "Microsoft.DataFactory/factories": {
+                ${tags_json}
+            }
+        }
+    },
+    "enableCMK": {
+        "value": false
+    },
+    "cmkIdentity": {
+        "value": ""
+    },
+    "apiVersion": {
+        "value": "2018-06-01"
+    },
+    "keyName": {
+        "value": ""
+    },
+    "keyVersion": {
+        "value": ""
+    },
+    "vaultBaseUrl": {
+        "value": ""
+    },
+    "userAssignedIdentitiesStr": {
+        "value": ""
+    },
+    "userAssignedIdentities": {
+        "value": {
+            "type": "SystemAssigned"
+          }
+      }
+}

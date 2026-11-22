@@ -1,0 +1,161 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "defaultValue": "myv2datafactory",
+            "type": "String"
+        },
+        "version": {
+            "defaultValue": "V2",
+            "type": "String"
+        },
+        "location": {
+            "defaultValue": "eastus",
+            "type": "String"
+        },
+        "apiVersion": {
+            "defaultValue": "2018-06-01",
+            "type": "String"
+        },
+        "tagsByResource": {
+            "type": "Object"
+        },
+        "vNetEnabled": {
+            "defaultValue": false,
+            "type": "Bool"
+        },
+        "publicNetworkAccess": {
+            "defaultValue": true,
+            "type": "Bool"
+        },
+        "gitConfigureLater": {
+            "defaultValue": true,
+            "type": "Bool"
+        },
+        "gitRepoType": {
+            "defaultValue": "FactoryVSTSConfiguration",
+            "type": "String"
+        },
+        "gitAccountName": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "gitProjectName": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "gitRepositoryName": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "gitCollaborationBranch": {
+            "defaultValue": "master",
+            "type": "String"
+        },
+        "gitRootFolder": {
+            "defaultValue": "/",
+            "type": "String"
+        },
+        "userAssignedIdentities": {
+            "defaultValue": {
+                "type": "SystemAssigned"
+            },
+            "type": "Object"
+        },
+        "userAssignedIdentitiesStr": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "vaultBaseUrl": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "keyName": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "keyVersion": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "enableCMK": {
+            "defaultValue": false,
+            "type": "Bool"
+        },
+        "cmkIdentity": {
+            "defaultValue": "",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "managedVNetIrProperties": {
+            "type": "Managed",
+            "managedVirtualNetwork": {
+                "referenceName": "default",
+                "type": "ManagedVirtualNetworkReference"
+            },
+            "typeProperties": {
+                "computeProperties": {
+                    "location": "AutoResolve"
+                }
+            }
+        },
+        "nonManagedVnetIrProperties": {
+            "type": "Managed",
+            "typeProperties": {
+                "computeProperties": {
+                    "location": "AutoResolve"
+                }
+            }
+        }
+    },
+    "resources": [
+        {
+            "condition": "[equals(parameters('version'), 'V2')]",
+            "type": "Microsoft.DataFactory/factories",
+            "apiVersion": "2018-06-01",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "identity": "[if(parameters('enableCMK'),json(parameters('userAssignedIdentitiesStr')), parameters('userAssignedIdentities'))]",
+            "properties": {
+                "repoConfiguration": "[if(bool(parameters('gitConfigureLater')), json('null'), json(concat('{\"type\": \"', parameters('gitRepoType'), '\",','\"accountName\": \"', parameters('gitAccountName'), '\",','\"repositoryName\": \"', parameters('gitRepositoryName'), '\",', if(equals(parameters('gitRepoType'), 'FactoryVSTSConfiguration'), concat('\"projectName\": \"', parameters('gitProjectName'), '\",'), ''),'\"collaborationBranch\": \"', parameters('gitCollaborationBranch'), '\",','\"rootFolder\": \"', parameters('gitRootFolder'), '\"}')))]",
+                "publicNetworkAccess": "[if(bool(parameters('publicNetworkAccess')), 'Enabled', 'Disabled')]",
+                "encryption": "[if(bool(parameters('enableCMK')), json(concat('{\"identity\":{\"userAssignedIdentity\":\"', parameters('cmkIdentity'), '\"},','\"VaultBaseUrl\": \"', parameters('vaultBaseUrl'), '\",','\"KeyName\": \"', parameters('keyName'), '\",','\"KeyVersion\": \"', parameters('keyVersion'), '\"}')), json('null'))]"
+            },
+            "tags": "[ if(contains(parameters('tagsByResource'), 'Microsoft.DataFactory/factories'), parameters('tagsByResource')['Microsoft.DataFactory/factories'], json('{}')) ]",
+            "resources": [
+                {
+                    "condition": "[and(equals(parameters('version'), 'V2'), parameters('vNetEnabled'))]",
+                    "name": "[concat(parameters('name'), '/default')]",
+                    "type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+                    "apiVersion": "2018-06-01",
+                    "properties": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.DataFactory/factories/', parameters('name'))]"
+                    ]
+                },
+                {
+                    "condition": "[equals(parameters('version'), 'V2')]",
+                    "name": "[concat(parameters('name'), '/AutoResolveIntegrationRuntime')]",
+                    "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+                    "apiVersion": "2018-06-01",
+                    "properties": "[if(parameters('vNetEnabled'), variables('managedVNetIrProperties') , variables('nonManagedVnetIrProperties'))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.DataFactory/factories/', parameters('name'))]",
+                        "[concat('Microsoft.DataFactory/factories/', parameters('name'), if(parameters('vNetEnabled'), '/managedVirtualNetworks/default', ''))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": "[equals(parameters('version'), 'V1')]",
+            "apiVersion": "2015-01-01-preview",
+            "name": "[parameters('name')]",
+            "location": "[if(equals(parameters('version'), 'V1'), parameters('location'), 'eastus')]",
+            "type": "Microsoft.DataFactory/dataFactories",
+            "properties": {},
+            "tags": "[ if(contains(parameters('tagsByResource'), 'Microsoft.DataFactory/dataFactories'), parameters('tagsByResource')['Microsoft.DataFactory/dataFactories'], json('{}')) ]"
+        }
+    ]
+}
