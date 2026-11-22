@@ -1,0 +1,122 @@
+trigger: none
+  # branches:
+  #   include:
+  #   - master
+  #   # - feature/*
+  # # paths:
+  # #   include:
+  # #   - azurerm/azure_devops_agent_linux/
+  # #   exclude:
+  # #   - azurerm/azure_devops_agent_linux/README.md
+
+pool: Default
+
+resources:      
+  repositories: 
+  - repository: azdo_templates
+    name: PCET-SRE/azdo_templates
+    type: git 
+    ref: master
+
+jobs:
+- job: terraformPlan
+  displayName: Terraform Plan
+  steps: 
+  - script: |
+      sudo apt-get install unzip
+      export http_proxy=http://proxy.example.com:80
+      export https_proxy=http://proxy.example.com:80
+      export no_proxy=169.254.169.254
+      env | grep proxy
+    displayName: install unzip and setup proxy
+
+  - template: templates/scripts/install-terraform.yml@azdo_templates
+    parameters:
+      terraformVersion: '0.12.19'
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: example-service-connection
+      workingDirectory: azurerm/azure_devops_agent_linux/examples/full
+      addSpnToEnvironment: true
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        #!/usr/bin/env bash
+        set -euxo pipefail
+
+        function azureTenantId() {
+          az account show --query "tenantId" --output tsv
+        }
+
+        function azureSubscriptionId() {
+          az account show --query "id" --output tsv
+        }
+
+        export ARM_USE_MSI=true
+        export ARM_TENANT_ID=$(azureTenantId)
+        export ARM_SUBSCRIPTION_ID=$(azureSubscriptionId)
+
+        terraform init
+        terraform validate
+        terraform plan -out=terraform.tfplan
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: "azurerm/azure_devops_agent_linux/examples/full/terraform.tfplan"
+      artifactName: tfplan
+      
+- deployment: terraformApply
+  dependsOn: terraformPlan
+  displayName: Terraform Apply
+  environment: automation
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - checkout: self
+          fetchDepth: 1
+
+        - script: |
+            sudo apt update
+            sudo apt install -y software-properties-common
+            sudo apt-add-repository --yes --update ppa:ansible/ansible
+            sudo apt install -y ansible
+          displayName: Install Ansible
+
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            source: current
+            artifact: tfplan
+            path: azurerm/azure_devops_agent_linux/examples/full
+            
+        - template: templates/scripts/install-terraform.yml@azdo_templates
+          parameters:
+            terraformVersion: '0.12.19'
+
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: example-service-connection
+            workingDirectory: azurerm/azure_devops_agent_linux/examples/full
+            addSpnToEnvironment: true
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              #!/usr/bin/env bash
+              set -euxo pipefail
+
+              function azureTenantId() {
+                az account show --query "tenantId" --output tsv
+              }
+
+              function azureSubscriptionId() {
+                az account show --query "id" --output tsv
+              }
+
+              export ARM_USE_MSI=true
+              export ARM_TENANT_ID=$(azureTenantId)
+              export ARM_SUBSCRIPTION_ID=$(azureSubscriptionId)
+
+              terraform init
+              terraform validate
+              terraform apply -auto-approve terraform.tfplan

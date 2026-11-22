@@ -1,0 +1,64 @@
+trigger: none
+
+pool: Default
+
+resources:      
+  repositories: 
+  - repository: azdo_templates
+    name: PCET-SRE/azdo_templates
+    type: git 
+    ref: install_nodejs&docker
+  - repository: terraform_modules
+    name: PCET-SRE/terraform_modules
+    type: git
+    ref: storage_module
+
+jobs:
+- job: terraformPlan
+  displayName: Terraform Plan
+  steps: 
+  - checkout: self
+  - checkout: terraform_modules
+
+  - task: replacetokens@3
+    inputs:
+         targetFiles: |
+           **/azurerm/singnalfx_integration/variables.tf
+         encoding: 'auto'
+         writeBOM: true
+         actionOnMissing: 'warn'
+         keepToken: false
+         tokenPrefix: '+'
+         tokenSuffix: '+'
+
+  - template: templates/scripts/terraform-plan-msi.yml@azdo_templates
+    parameters:
+        tf_version: '0.12.24'
+        workingDir: azurerm/singnalfx_integration
+        sub_id: 10000000-0000-0000-0000-000000000005
+        repository: terraform_modules
+
+- job: terraformApply
+  dependsOn: terraformPlan
+  displayName: Terraform Apply
+  steps:     
+  - checkout: self
+  - checkout: terraform_modules
+  
+  - task: replacetokens@3
+    inputs:
+         targetFiles: |
+           **/azurerm/singnalfx_integration/variables.tf
+         encoding: 'auto'
+         writeBOM: true
+         actionOnMissing: 'warn'
+         keepToken: false
+         tokenPrefix: '+'
+         tokenSuffix: '+'
+
+  - template: templates/scripts/terraform-apply-msi.yml@azdo_templates
+    parameters:
+      tf_version: '0.12.24'
+      workingDir: azurerm/singnalfx_integration
+      sub_id: 10000000-0000-0000-0000-000000000005
+      repository: terraform_modules

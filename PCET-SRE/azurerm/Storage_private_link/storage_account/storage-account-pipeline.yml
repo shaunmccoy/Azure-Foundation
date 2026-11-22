@@ -1,0 +1,27 @@
+trigger:
+  branches:
+    include:
+    - master
+    - feature/*
+  paths:
+    include:
+    - azurerm/storage_account/
+    exclude:
+    - azurerm/storage_account/README.md
+
+pool: Default
+
+resources:      
+  repositories: 
+  - repository: azdo_templates
+    name: PCET-SRE/azdo_templates
+    type: git 
+    ref: master
+
+jobs:
+# This needs to be iterated on for each module example.
+- template: templates/terraform.yml@azdo_templates
+  parameters:
+    azureSubscription: example-service-connection
+    environment: automation
+    workingDirectory: azurerm/storage_account/examples
